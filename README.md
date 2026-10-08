@@ -46,7 +46,7 @@ header 里那四个地址沿用原厂加载约定，payload 实际落在哪里�
 |---|---|
 | `overlay/arch/arm/dts/tegra124-xiaomi-mocha.dts` | 板级设备树 |
 | `overlay/board/xiaomi/mocha/mocha_emmc_boot.env` | 默认编译进 U-Boot 的环境，负责 eMMC 引导 |
-| `overlay/board/xiaomi/mocha/mocha_ram_debug.env` | RAM 诊断环境，打印自标 `MC-SMMU-config` 的 `md.l 70019010 1` 后进 fastboot；仓库内没有任何文件引用它 |
+| `overlay/board/xiaomi/mocha/mocha_ram_debug.env` | `build.sh <out> ram` 选用；打印自标 `MC-SMMU-config` 的 `md.l 70019010 1` 后进 fastboot |
 | `overlay/drivers/video/sharp-lq079l1sx01.c` | 面板驱动：复位时序、成对 DCS 命令、时序参数 |
 | `overlay/drivers/video/tegra/dsi.c` | Tegra DSI 桥驱动，含 Mocha 冷启动 quiesce |
 | `configs/mocha_defconfig.full` | 已验证引导的完整 `.config` 快照，构建时直接当 `.config` 用 |
@@ -69,6 +69,8 @@ bash tools/build.sh ../artifacts/uboot
 ```
 
 第一个参数是输出目录，默认 `../artifacts/uboot`；`JOBS` 控制 make 并行度，默认 4。脚本把 `overlay/` 覆盖进源码树，把 `configs/mocha_defconfig.full` 直接作为 `.config` 跑 `olddefconfig`，然后在编译前逐项检查下面六个符号，命中任意一个就打印 `Forbidden write feature: <名字>` 并非零退出：
+
+第二个参数选择 `emmc`（默认）或 `ram`。`emmc` 保持原有 APP 自动引导环境；`ram` 使用已有的 `mocha_ram_debug.env`，启动后留在 U-Boot Fastboot，供 `load-ram.py` 传入候选内核。未知模式在下载和创建输出目录前失败；`olddefconfig` 后还检查实际选中的 `CONFIG_ENV_SOURCE_FILE`。输出的 `profile.txt` 记录模式与环境名，并纳入 `SHA256SUMS`。
 
 ```
 CONFIG_MMC_WRITE  CONFIG_EXT4_WRITE  CONFIG_FASTBOOT_FLASH
@@ -97,6 +99,18 @@ fastboot boot ../artifacts/mocha-uboot.img
 ```
 
 原厂 bootloader 把容器读进 RAM，从 `0x80a00000` 开始执行，eMMC 上的内容不变；重新上电就回到改动前的状态。改 U-Boot 时先用这条路验证，[CONTRIBUTING.md](CONTRIBUTING.md) 也是这个口径：先用临时镜像验证，再讨论默认引导。
+
+APP 已安装时，默认镜像会尝试自动进入 Debian。需要停在 U-Boot Fastboot 并用 RAM 加载器测试新内核时，构建单独的 `ram` 镜像：
+
+```sh
+bash tools/build.sh ../artifacts/uboot-ram ram
+python3 tools/pack-android.py \
+  ../artifacts/uboot-ram/u-boot-dtb.bin ../artifacts/uboot-ram/u-boot \
+  ../artifacts/mocha-uboot-ram.img
+fastboot boot ../artifacts/mocha-uboot-ram.img
+```
+
+然后核对 U-Boot 的产品与版本，再执行下面的 `load-ram.py`。2026-10-09 在 Debian 13／GCC 14.2.0 上，`emmc` 与 `ram` 两种模式均完整编译通过；实际 `.config` 的环境选择、六项禁写断言、产物 SHA256 和 RAM Android 容器头／payload／SHA1 均已检查。生成的 RAM `bootcmd` 确实进入 `fastboot usb 0`。这些是构建检查，新模式的实机 USB、RAM 内核引导和画面仍需验收，不能沿用默认镜像以前的冷启动结果。
 
 ### 写入 LNX 并验证
 
@@ -169,7 +183,7 @@ BootROM 不参与。它照旧从 eMMC 取原厂 bootloader，本仓库不碰这�
 | ganged 非对称切分 | 只支持左右对称切分，代码内留着 TODO | `overlay/drivers/video/tegra/dsi.c:796` |
 | 关闭 OEM run | 现为调试入口，关闭前需另验安装与恢复路径 | `configs/mocha_defconfig.full:1139`（当前为 `y`） |
 | 持久化写入工具 | 仓库内没有脚本，`tools/` 只有三份 | `tools/` |
-| RAM 诊断环境的启用 | defconfig 指向 `mocha_emmc_boot`，没有文件选中 `mocha_ram_debug` | `configs/mocha_defconfig.full:196` |
+| RAM 诊断环境的启用 | 构建脚本已接通 `ram` 模式；新模式的实机 USB 与候选内核引导待验收 | `tools/build.sh`、`overlay/board/xiaomi/mocha/mocha_ram_debug.env` |
 | FAT 写入与 SPI flash 命令 | 仍在编译里，六项断言覆盖不到 | `configs/mocha_defconfig.full:759,1356,1946-1947` |
 | SPL | 配置里有 SPL 相关符号，`build.sh` 只构建 `u-boot-dtb.bin` | `configs/mocha_defconfig.full:215,225`、`tools/build.sh:14` |
 | 设备树 overlay | 未启用 | `configs/mocha_defconfig.full:206` |
