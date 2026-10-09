@@ -112,7 +112,7 @@ fastboot boot ../artifacts/mocha-uboot-ram.img
 
 然后核对 U-Boot 的产品与版本，再执行下面的 `load-ram.py`。2026-10-09 在 Debian 13／GCC 14.2.0 上，`emmc` 与 `ram` 两种模式均完整编译通过；实际 `.config` 的环境选择、六项禁写断言、产物 SHA256 和 RAM Android 容器头／payload／SHA1 均已检查。生成的 RAM `bootcmd` 确实进入 `fastboot usb 0`。这些是构建检查，新模式的实机 USB、RAM 内核引导和画面仍需验收，不能沿用默认镜像以前的冷启动结果。
 
-2026-10-10 从原厂 Fastboot 临时加载新 RAM 镜像，上传与 `boot` 均返回 OKAY；用户确认屏幕正常，并看到 `Mocha RAM USB diagnostics`。Windows 枚举出新的 `USB download gadget` 实例，但它还需单独绑定驱动；U-Boot Fastboot 命令和候选 Linux 引导仍待验证。这次画面观察只覆盖 RAM U-Boot，不代表 native Linux 桌面或默认冷启动通过。
+2026-10-10 从原厂 Fastboot 临时加载新 RAM 镜像，上传与 `boot` 均返回 OKAY；用户确认屏幕正常，并看到 `Mocha RAM USB diagnostics`。Windows 新出现的 `USB download gadget` 实例单独绑定签名 WinUSB 驱动后，U-Boot 产品与版本检查、RAM block 上传、`bootm` 均成功。随后 stable/native 两套新 Linux 分别启动并恢复 USB SSH，各实际捕获 ELF core；eMMC 保持只读。stable 日志画面正常，native CPU/GPU 色块仍只有背光、黑屏。这些结果不代表原生 Linux 桌面或默认冷启动通过，详见总入口的 [RAM 诊断](https://github.com/Pisces-Moze/mocha-moze-debian/blob/codex/mocha-diagnostics-2026-10-09/docs/DIAGNOSTICS-2026-10-10.md)。
 
 ### 写入 LNX 并验证
 
