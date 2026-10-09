@@ -112,6 +112,8 @@ fastboot boot ../artifacts/mocha-uboot-ram.img
 
 然后核对 U-Boot 的产品与版本，再执行下面的 `load-ram.py`。2026-10-09 在 Debian 13／GCC 14.2.0 上，`emmc` 与 `ram` 两种模式均完整编译通过；实际 `.config` 的环境选择、六项禁写断言、产物 SHA256 和 RAM Android 容器头／payload／SHA1 均已检查。生成的 RAM `bootcmd` 确实进入 `fastboot usb 0`。这些是构建检查，新模式的实机 USB、RAM 内核引导和画面仍需验收，不能沿用默认镜像以前的冷启动结果。
 
+2026-10-10 从原厂 Fastboot 临时加载新 RAM 镜像，上传与 `boot` 均返回 OKAY；用户确认屏幕正常，并看到 `Mocha RAM USB diagnostics`。Windows 枚举出新的 `USB download gadget` 实例，但它还需单独绑定驱动；U-Boot Fastboot 命令和候选 Linux 引导仍待验证。这次画面观察只覆盖 RAM U-Boot，不代表 native Linux 桌面或默认冷启动通过。
+
 ### 写入 LNX 并验证
 
 持久化写入的做法是：把已经验证过的这份容器写进 LNX 分区（本机设备上为 p22），回读该分区前缀的 SHA256，与 `mocha-uboot.json` 里的 `sha256` 对照，再断电重开，确认普通电源键开机能沿同一条链走到 Linux。
