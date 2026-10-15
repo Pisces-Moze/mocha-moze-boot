@@ -6,6 +6,8 @@
 
 ## 简介
 
+2026-10-16：Mocha 覆盖层提前将 Q0 配成电源键输入，在显示初始化前锁存按键状态，并通过内核命令行传给充电生成器。新容器在 RAM 中核对松开状态后，由总入口安装器带备份写入 LNX 并回读校验；普通插电按住冷启动记录 held，用户确认直接进入桌面。该改变不控制原厂前级引导器的关机短按门控。完整产物与验收范围见 [实机记录](https://github.com/Pisces-Moze/mocha-moze-debian/blob/codex/mocha-diagnostics-2026-10-09/docs/DIAGNOSTICS-2026-10-16.md)。
+
 这个仓库负责 Mocha 引导链里 U-Boot 这一段：把上游 U-Boot 2026.07 编成能在该机型上接手的引导器，按原厂约定打包成 Android legacy `boot.img` 容器，再从 eMMC 的 APP 分区读出内核、设备树与 initramfs 交给 Linux。原厂 Tegra bootloader、TOS 与 SOS 全部保留，本仓库不替换它们，也不改动 BootROM。
 
 它本身不产生可安装的系统。发行版 rootfs 与安装、回退流程在 [mocha-moze-debian](https://github.com/Pisces-Moze/mocha-moze-debian)，6.12.111 内核在 [mocha-moze-linux](https://github.com/Pisces-Moze/mocha-moze-linux)，背光、音频与 GPU 实验在 [mocha-moze-drivers](https://github.com/Pisces-Moze/mocha-moze-drivers)，Niri、Noctalia 与充电界面在 [mocha-moze-desktop](https://github.com/Pisces-Moze/mocha-moze-desktop)。本仓库交付的是一份 `mocha-uboot.img` 和一条只跑在 RAM 里的调试通道。

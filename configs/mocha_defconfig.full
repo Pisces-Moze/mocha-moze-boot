@@ -427,7 +427,7 @@ CONFIG_ARCH_FIXUP_FDT_MEMORY=y
 # CONFIG_USE_BOOTARGS is not set
 # CONFIG_BOOTARGS_SUBST is not set
 CONFIG_USE_BOOTCOMMAND=y
-CONFIG_BOOTCOMMAND="run boot_debian; echo Debian boot unavailable - USB Fastboot; fastboot usb 0"
+CONFIG_BOOTCOMMAND="run sample_power_key; run boot_debian; echo Debian boot unavailable - USB Fastboot; fastboot usb 0"
 # CONFIG_USE_PREBOOT is not set
 CONFIG_DEFAULT_FDT_FILE=""
 # CONFIG_SAVE_PREV_BL_FDT_ADDR is not set
