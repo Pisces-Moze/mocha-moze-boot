@@ -6,7 +6,8 @@ mode=${2:-emmc}
 case "$mode" in
  emmc) environment=mocha_emmc_boot;;
  ram) environment=mocha_ram_debug;;
- *) echo 'Use: build.sh [output-directory] [emmc|ram]' >&2;exit 2;;
+ animation) environment=mocha_animation_test;;
+ *) echo 'Use: build.sh [output-directory] [emmc|ram|animation]' >&2;exit 2;;
 esac
 src="$out/source";mkdir -p "$out"
 if [ ! -e "$src" ];then git clone --depth 1 --branch v2026.07 https://source.denx.de/u-boot/u-boot.git "$src";fi
@@ -20,6 +21,7 @@ for flag in MMC_WRITE EXT4_WRITE FASTBOOT_FLASH CMD_SAVEENV CMD_GPT ENV_IS_IN_MM
  if grep -qx "CONFIG_$flag=y" "$src/.config";then echo "Forbidden write feature: $flag";exit 1;fi
 done
 make -C "$src" CROSS_COMPILE=arm-linux-gnueabihf- -j"${JOBS:-4}" u-boot-dtb.bin
+python3 "$repo/tools/verify-env.py" "$src/u-boot" "$src/u-boot-dtb.bin" "$mode" > "$out/environment-check.json"
 cp "$src/u-boot" "$src/u-boot-dtb.bin" "$src/.config" "$out/"
 printf 'mode=%s\nenvironment=%s\nupstream_tag=v2026.07\n' "$mode" "$environment" > "$out/profile.txt"
-(cd "$out";sha256sum u-boot u-boot-dtb.bin .config profile.txt > SHA256SUMS)
+(cd "$out";sha256sum u-boot u-boot-dtb.bin .config profile.txt environment-check.json > SHA256SUMS)

@@ -8,14 +8,19 @@
 
 #include <dm.h>
 #include <env.h>
+#include <env_internal.h>
 #include <fdt_support.h>
+#include <hang.h>
 #include <i2c.h>
 #include <log.h>
 #include <asm/io.h>
+#include <asm/global_data.h>
 #include <asm/arch/gpio.h>
 #include <asm/arch/pinmux.h>
 #include <asm/arch/tegra.h>
 #include <linux/delay.h>
+
+DECLARE_GLOBAL_DATA_PTR;
 
 /* Nonzero initializer keeps this latch in .data across U-Boot relocation.
  * Configure only the active-low Q0 power-key input before display probing.
@@ -51,8 +56,22 @@ void nvidia_board_late_init(void)
 	const char *state = boot_power_key < 0 ? "unavailable" :
 		boot_power_key ? "released" : "held";
 
-	env_set_ulong("mocha_desktop_requested", boot_power_key == 0);
-	env_set("mocha_power_key_early", state);
+	/* A chainloaded image must leave the early 32-byte env_get() buffer
+	 * before autoboot runs nested scripts. Import only compiled defaults;
+	 * this board deliberately has no persistent environment backend.
+	 */
+	if (!(gd->flags & GD_FLG_ENV_READY)) {
+		env_set_default(NULL, 0);
+		if (!(gd->flags & GD_FLG_ENV_READY)) {
+			puts("Mocha: cannot initialise the RAM boot environment\n");
+			hang();
+		}
+	}
+	if (env_set_ulong("mocha_desktop_requested", boot_power_key == 0) ||
+	    env_set("mocha_power_key_early", state)) {
+		puts("Mocha: cannot store the boot power-key state\n");
+		hang();
+	}
 	printf("Mocha early power key: %s\n", state);
 }
 
