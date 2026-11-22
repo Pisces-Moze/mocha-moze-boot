@@ -192,19 +192,17 @@ BootROM 不参与。它照旧从 eMMC 取原厂 bootloader，本仓库不碰这�
 
 没收口的地方：`CONFIG_FAT_WRITE=y`、`CONFIG_FAT_RENAME=y`、`CONFIG_CMD_SF=y`、`CONFIG_SPI_FLASH_UNLOCK_ALL=y` 仍在配置里，FAT 写入与 SPI flash 擦写命令都还可用，而 `tools/build.sh` 的断言只覆盖上面那张表的六个符号。这些介质上有没有可写区域，未确认。
 
-## 未实现与计划
+## 引导器后续任务
+
+原厂 Fastboot → RAM 维护及 Linux 桌面交接已有实机验证。整合包的 Windows 驱动自动绑定和多容量验收见 [Mocha 任务表](https://github.com/Pisces-Moze/mocha-moze-debian/blob/main/docs/TODO.md)。
 
 | 条目 | 现状 | 出处 |
 |---|---|---|
 | ganged 非对称切分 | 只支持左右对称切分，代码内留着 TODO | `overlay/drivers/video/tegra/dsi.c:796` |
 | 关闭 OEM run | 现为调试入口，关闭前需另验安装与恢复路径 | `configs/mocha_defconfig.full:1139`（当前为 `y`） |
-| 持久化写入工具 | 仓库内没有脚本，`tools/` 只有三份 | `tools/` |
-| RAM 诊断环境的启用 | 构建脚本已接通 `ram` 模式；新模式的实机 USB 与候选内核引导待验收 | `tools/build.sh`、`overlay/board/xiaomi/mocha/mocha_ram_debug.env` |
 | FAT 写入与 SPI flash 命令 | 仍在编译里，六项断言覆盖不到 | `configs/mocha_defconfig.full:759,1356,1946-1947` |
 | SPL | 配置里有 SPL 相关符号，`build.sh` 只构建 `u-boot-dtb.bin` | `configs/mocha_defconfig.full:215,225`、`tools/build.sh:14` |
 | 设备树 overlay | 未启用 | `configs/mocha_defconfig.full:206` |
-| Linux native 交接与原生桌面 | 属于 mocha-moze-linux 与 mocha-moze-desktop | 兄弟仓库 |
-| CPU/GPU 调频与超频 | 保持未启用 | `CONTRIBUTING.md:6` |
 | 冷启动实机验证 | 记录为至少两次普通冷启动正常，没有更系统的批量验证 | `overlay/drivers/video/tegra/dsi.c:1016` |
 
 ## 许可证与来源
